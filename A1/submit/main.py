@@ -507,8 +507,7 @@ class Task3:
         cv_scores = cross_val_score(
             self.dt_model, self.X_train, self.y_train, cv=self.skf, scoring='accuracy')
         print(f'Decision Tree Average Accuracy: {cv_scores.mean() * 100:.2f}%')
-        print(f'Decision Tree Standard Deviation: {
-              cv_scores.std() * 100:.2f}%')
+        print(f'Decision Tree Standard Deviation: {cv_scores.std() * 100:.2f}%')
 
     def evaluate_decision_tree(self):
         self.dt_model.fit(self.X_train, self.y_train)
