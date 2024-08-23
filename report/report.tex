@@ -1,0 +1,46 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[top=1.8cm,bottom=2.0cm,right=1.35cm,left=1.35cm]{geometry}
+\usepackage{url}
+\usepackage[natbibapa]{apacite}
+\bibliographystyle{apacite}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[onehalfspacing]{setspace}
+
+\usepackage{lipsum}% this generates fictitious text for sample
+%opening
+\title{Yann LeCun: A reflection on building machines with human intelligence}
+\author{
+    Ryan Mills: SN 7168755\\
+    Karan Goel: SN 7836685\\
+    Banin Sensha Shrestha: SN 8447196\\
+    Masud Faruk: SN 7056849\\
+}
+\date{CSCI433/933 Assignment 2, Part I\\
+March 23, 2024}
+
+\begin{document}
+\maketitle
+\newpage
+\section{Academic background and key research areas}
+\label{sec:introduction}
+Yann LeCun, a French-American computer scientist, has been awarded the Turing award for his contributions in the fields of machine learning, computer vision and deep learning. He is best-known for his research into convolutional neural networks (CNN's) for computer vision. His work with CNN’s led to breakthroughs in image recognition. Currently he is a professor at New York University and the chief A.I. scientist at Meta. \cite{lecunYannLeCunaposs} 
+
+\section{Two important works}
+\textbf{Deep Learning (2015)}: Authored by Yann LeCun, Yoshua Bengio and Geoffrey Hinton, this highly influential paper explores the profound impact of deep learning across various domains. It highlights the revolutionary advancements in tasks like image and speech recognition, emphasizing the importance of representation learning. \\
+\textbf{Gradient-based Learning Applied to Document Recognition (1998)}: This seminal work demonstrates the effectiveness of convolutional neural networks (CNNs) in handwritten digit recognition. The development of the LeNet-5 architecture by the contributors laid the foundation for modern deep learning algorithms, particularly in pattern recognition tasks.
+
+\section{Contribution to building machines with human intelligence}
+In the Deep Learning review, the authors delve into Representational Learning, hierarchical processing, adaptability, and minimal engineering requirements. They highlight Representational Learning's role in mimicking human intelligence, showcasing techniques like Supervised and Unsupervised Learning, Backpropagation, Distributed Representation, and Recurrent Neural Networks. These methods enable systems to classify images, akin to humans distinguishing between objects like dogs and cats and adapting to new situations. \cite{lecun2015} \\\\
+In LeCun's paper on Gradient-based Learning, the LeNet-5 architecture demonstrates how CNNs mirror human learning processes. The network rapidly constructs models through iterations, adjusting weights based on gradient descent to associate input images with correct digit labels. This process resembles human learning, refining pattern recognition skills through repeated exposure and feedback. The network's abstract representations capture essential features of digits while disregarding irrelevant details, akin to human conceptualization. Additionally, the network's approximate inference during digit recognition parallels human inference based on perceptual cues. \cite{lecun1998}
+\section{Conclusion}
+\label{sec:conclusion}
+The works of Yann LeCun, Yoshua Bengio, and Geoffrey Hinton in their review paper on "Deep Learning (2015)" and Yann LeCun's paper "Gradient-based Learning Applied to Document Recognition (1998)" offer profound insights into the core ingredients of human intelligence, particularly in learning, perception, and adaptability. These works collectively illustrate how deep learning methods emulate core aspects of human intelligence, from rapid model building and approximate inference to abstract concept capture. They provide foundational insights for advancing machine learning and artificial intelligence towards human-like learning and cognition.
+\newpage
+\nocite{*}
+\bibliography{bibliography_data}
+
+\end{document}
