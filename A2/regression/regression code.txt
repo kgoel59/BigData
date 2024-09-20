@@ -1,0 +1,69 @@
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.metrics import classification_report, accuracy_score, mean_squared_error
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+import numpy as np
+
+
+# Define features and labels for classification
+X = np.hstack((
+    df_preprocessed[['retweet_count', 'tweet_count']].values, 
+    np.array(df_preprocessed['word2vec_embeddings'].tolist())  # Add word2vec embeddings as features
+))
+y = df_preprocessed['gender']  # Target variable (binary: human or non-human)
+
+# Split data for training and testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Apply SMOTE to oversample the minority class (humans)
+smote = SMOTE(random_state=42)
+X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
+
+# Scale all features
+scaler = StandardScaler()
+X_train_smote = scaler.fit_transform(X_train_smote)
+X_test = scaler.transform(X_test)
+
+# Logistic Regression
+
+# GridSearchCV for tuning regularization parameter C
+param_grid = {'C': [0.01, 0.1, 1, 10, 100]}
+grid_search = GridSearchCV(LogisticRegression(max_iter=1000, class_weight='balanced'), param_grid, cv=5, scoring='f1_weighted')
+grid_search.fit(X_train_smote, y_train_smote)
+
+# Best parameters for Logistic Regression
+best_log_reg = grid_search.best_estimator_
+print("Best parameters for Logistic Regression: ", grid_search.best_params_)
+
+# Logistic Regression Predictions
+y_pred_logistic = best_log_reg.predict(X_test)
+
+# Classification Report for Logistic Regression
+print("\nClassification Report (Logistic Regression with SMOTE):")
+print(classification_report(y_test, y_pred_logistic))
+
+# Cross-Validation Scores for Logistic Regression
+cv_scores = cross_val_score(best_log_reg, X, y, cv=5, scoring='f1_weighted')
+print(f'Logistic Regression Cross-Validation F1 scores: {cv_scores}')
+print(f'Mean F1 score (Logistic Regression): {np.mean(cv_scores)}')
+
+# Linear regression
+# Initialize and train Linear Regression model
+linear_reg = LinearRegression()
+linear_reg.fit(X_train_smote, y_train_smote)
+
+# Linear Regression predictions (continuous)
+y_pred_linear_continuous = linear_reg.predict(X_test)
+
+# Convert continuous predictions to binary (classification threshold = 0.5)
+y_pred_linear_class = (y_pred_linear_continuous >= 0.5).astype(int)
+
+# Classification Report for Linear Regression
+print("\nClassification Report (Linear Regression used for Classification):")
+print(classification_report(y_test, y_pred_linear_class))
+
+# Cross-Validation Scores for Linear Regression
+cv_scores_linear = cross_val_score(linear_reg, X, y, cv=5, scoring='f1_weighted')
+print(f'Linear Regression Cross-Validation F1 scores: {cv_scores_linear}')
+print(f'Mean F1 score (Linear Regression): {np.mean(cv_scores_linear)}')
