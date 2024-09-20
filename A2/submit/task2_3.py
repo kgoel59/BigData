@@ -50,8 +50,8 @@ class Task2_3:
         knn_classifier = KNNClassifier(df_preprocessed)
         best_knn_model, knn_params = knn_classifier.train()
 
-        # svm_classifier = SVMClassifier(df_preprocessed)
-        # best_svm_model, svm_params = svm_classifier.train()
+        svm_classifier = SVMClassifier(df_preprocessed)
+        best_svm_model, svm_params = svm_classifier.train()
 
         dt_classifier = DecisionTreeClassifierModel(df_preprocessed)
         best_dt_model, dt_params = dt_classifier.train()

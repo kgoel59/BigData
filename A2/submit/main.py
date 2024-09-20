@@ -32,6 +32,7 @@ from textProcessor import TextProcessor
 
 from task2_P1 import Task2_P1
 from task2_3 import Task2_3
+from task4 import Task4
 
 # Configure warnings and logging
 warnings.filterwarnings("ignore")
@@ -124,3 +125,9 @@ if __name__ == "__main__":
     Setup.section("Task 2 - Applying NN")
 
     task2_P2.neural_network(df_preprocessed)
+
+    Setup.section("Task 4 - Word Analysis")
+
+    task4 = Task4()
+
+    print(task4.word_analysis(df_preprocessed))
