@@ -79,7 +79,7 @@ if __name__ == "__main__":
     file = "twitter_user_data.csv"
     task2_P1 = Task2_P1(base_path, file)
     task2_P1.load_data()
-    df_preprocessed = task2_P1.preprocess_data_frame()[:100]
+    df_preprocessed = task2_P1.preprocess_data_frame()[:1000]
 
     _, p_values = task2_P1.plot_correlation_matrix(df_preprocessed)
 
