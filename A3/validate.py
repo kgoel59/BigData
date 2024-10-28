@@ -294,66 +294,80 @@ def validate(args):
 
     model.eval()
     pretrained_features = []
-    with torch.no_grad():
-        # warmup, reduce variability of first batch time, especially for comparing torchscript vs non
-        input = torch.randn((args.batch_size,) + tuple(data_config['input_size'])).to(device)
+
+    # Register a hook to capture the output from the final layer before the head
+    def get_features(module, input, output):
+        global pretrain_features
+        pretrain_features = output.cpu().detach().numpy()
+
+    # Attach hook to penultimate layer
+    penultimate_layer = list(model.children())[-2]
+    hook = penultimate_layer.register_forward_hook(get_features)
+
+    # Perform warmup pass
+    input = torch.randn((args.batch_size,) + tuple(data_config['input_size'])).to(device)
+    if args.channels_last:
+        input = input.contiguous(memory_format=torch.channels_last)
+    with torch.no_grad(), amp_autocast():
+        model(input)
+
+    # Extract features for each batch
+    end = time.time()
+    for batch_idx, (input, target) in enumerate(loader):
+        if args.no_prefetcher:
+            target = target.to(device)
+            input = input.to(device)
         if args.channels_last:
             input = input.contiguous(memory_format=torch.channels_last)
-        with amp_autocast():
-            model(input)
+        
+        with torch.no_grad(), amp_autocast():
+            # Run the forward pass and capture features
+            features = model.forward_features(input)
+            features_flattened = features.flatten(start_dim=1).cpu().numpy()
+            
+            # Create DataFrame for the batch
+            rows = pd.DataFrame(features_flattened)
+            rows.insert(0, column="label", value=target.cpu().numpy())
+            pretrained_features.append(rows)
 
-        end = time.time()
-        for batch_idx, (input, target) in enumerate(loader):
-            if args.no_prefetcher:
-                target = target.to(device)
-                input = input.to(device)
-            if args.channels_last:
-                input = input.contiguous(memory_format=torch.channels_last)
-
-            # compute output
-            with amp_autocast():
-                #output = model(input)
-                features = model.forward_features(input)
-                pre_logits = model.forward_head(features, pre_logits=True)
-                output = model.head(pre_logits)
-                #rows = pd.DataFrame(pre_logits.cpu().numpy())
-                rows = pd.DataFrame(features.flatten(start_dim=1).cpu().numpy())
-                rows.insert(0, column="label", value=target.cpu().numpy())
-                pretrained_features.append(rows)
-
-                if valid_labels is not None:
-                    output = output[:, valid_labels]
-                loss = criterion(output, target)
-
-            if real_labels is not None:
-                real_labels.add_result(output)
-
-            # measure accuracy and record loss
+        # Measure accuracy and record loss if applicable
+        if valid_labels is not None:
+            output = model.head(features)  # Get logits if necessary
+            output = output[:, valid_labels]
+            loss = criterion(output, target)
             acc1, acc5 = accuracy(output.detach(), target, topk=(1, 5))
             losses.update(loss.item(), input.size(0))
             top1.update(acc1.item(), input.size(0))
             top5.update(acc5.item(), input.size(0))
-
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            if batch_idx % args.log_freq == 0:
-                _logger.info(
-                    'Test: [{0:>4d}/{1}]  '
-                    'Time: {batch_time.val:.3f}s ({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s)  '
-                    'Loss: {loss.val:>7.4f} ({loss.avg:>6.4f})  '
-                    'Acc@1: {top1.val:>7.3f} ({top1.avg:>7.3f})  '
-                    'Acc@5: {top5.val:>7.3f} ({top5.avg:>7.3f})'.format(
-                        batch_idx,
-                        len(loader),
-                        batch_time=batch_time,
-                        rate_avg=input.size(0) / batch_time.avg,
-                        loss=losses,
-                        top1=top1,
-                        top5=top5
-                    )
+        
+        # Log progress
+        if batch_idx % args.log_freq == 0:
+            rate_avg = input.size(0) / batch_time.avg if batch_time.avg > 0 else 0  # Handle zero division
+            _logger.info(
+                'Test: [{0:>4d}/{1}]  '
+                'Time: {batch_time.val:.3f}s ({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s)  '
+                'Loss: {loss.val:>7.4f} ({loss.avg:>6.4f})  '
+                'Acc@1: {top1.val:>7.3f} ({top1.avg:>7.3f})  '
+                'Acc@5: {top5.val:>7.3f} ({top5.avg:>7.3f})'.format(
+                    batch_idx,
+                    len(loader),
+                    batch_time=batch_time,
+                    rate_avg=rate_avg,
+                    loss=losses,
+                    top1=top1,
+                    top5=top5
                 )
+            )
+
+    # Remove hook after extraction
+    hook.remove()
+
+    # Concatenate all features and save to CSV
+    all_features_df = pd.concat(pretrained_features, ignore_index=True)
+    print(all_features_df.shape)
+    output_file = f"{args.model}_features.csv"
+    all_features_df.to_csv(output_file, index=False)
+    print(f"Features saved to {output_file}")
 
     if real_labels is not None:
         # real labels mode replaces topk values at the end
